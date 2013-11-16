@@ -1,0 +1,25 @@
+Implementation of non-contact forces using Box-2D :
+Box 2D provides us with a set of classes and functions which make the underlying algorithms transparent. Initially it is quite tedious to get aclimatized with what is going on under the hood. But once we got in, we found some interesting things :
+- The Collision module contains shapes and functions that operate on them. 
+- The module also contains a dynamic tree and broad-phase to acceleration collision processing of large systems.
+- Box2D shapes implement the b2Shape base class. The base class defines functions to :
+	- Test a point for overlap with the shape.
+	- Perform a ray cast against the shape.
+	- Compute the shape's AABB.
+	- Compute the mass properties of the shape.
+- In addition, each shape has a type member and a radius. The radius even applies to polygons.
+- Polygons inherit a radius from b2Shape. The radius creates a skin around the polygon. The skin is used in stacking scenarios to keep polygons slightly separated. This allows continuous collision to work against the core polygon.
+
+But this played out well for contact forces. We had to modify the code somehow so that the same dynamics worked in the case of non-contact forces. 
+So after some research we discovered another important function of Box2D; the "ApplyLinearImpulse()".
+We could use this function to apply an impulse to any object in any direction described by a vector.
+
+So, we created a magnetic field around the coins and on every frame refresh polled the system to check if 2 or more coins are within each other's field.
+If so, we applied a linear impulse on each coin in a direction which matched exactly with the straight line joining the centers of the coins.
+Since this force is applied 30 times per second (the simulation runs at 30 FPS), it very closely replicates a magnetic field.
+
+When coins form an aggregate, the forces of attraction acting on each coin is directly proportional to the number of coins in the aggregate.
+This is because each coin applies a linear impulse on the other.
+Thus bigger the aggregate, harder it becomes for thr stiker to break it.
+But fractures happen on the edges of the aggregate as the magnitude of forces acting on it are lesser when compared to the forces acting on the coins which are in the middle of the aggregate.
+Thus, in the process of solving one problem, we eliminated the more difficult ones as well using a simple approximation which in the end turned out to be extremely accurate as the results show.
